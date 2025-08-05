@@ -1,0 +1,240 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -32
+      ],
+      "id": "5fabc7c1-3403-490c-a8ae-a7b2de6e4a02",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://venturebeat.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        -32
+      ],
+      "id": "584e3818-6c78-49ec-a7e1-04b3ae3dc7fb",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "maxItems": 3
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        288,
+        -32
+      ],
+      "id": "32f91901-6a32-479a-9977-35167d9991c7",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Summarize the following news article in 2 lines in simple, clear English for a daily AI newsletter. Only summarize based on the \"contentSnippet\" field:\n\n{{$json[\"contentSnippet\"]}}\n\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        496,
+        -32
+      ],
+      "id": "9953da0e-3e2a-46c7-9cb6-146a98a5a011",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KMVULFaF3CNBpdEs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bhavyasharma4708@gmail.com",
+        "subject": "= 🧠 Your Daily AI Digest",
+        "message": "={{ $json.emailbody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1488,
+        -16
+      ],
+      "id": "ce35dda0-2e25-4505-8bf9-e16a2ee2339f",
+      "name": "Send a message",
+      "webhookId": "4346f54e-0f81-44bb-850c-7215a0adc642",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bBy0z1DpSkdFlbFt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "401fc69b-4c25-4a1e-ae10-a9b76cc3a6cd",
+              "name": "emailBody",
+              "value": "=<h2>🗞 Top 3 Summaries</h2><ol> <li>{{$json[\"message\"][\"content\"]}}</li> </ol>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        -32
+      ],
+      "id": "6aa0848b-2ea5-4ff8-a343-9d0927986243",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    emailBody: items.map(item => {\n      const liMatch = item.json.emailBody.match(/<li>(.*?)<\\/li>/);\n      return liMatch ? liMatch[0] : '';\n    }).join('\\n')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -32
+      ],
+      "id": "7be6fc93-5b72-4bcf-a738-47bf324b414f",
+      "name": "Combine Email Bodies"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "69147d62-8646-4a86-ae0f-6bd7ab718d9e",
+              "name": "emailbody",
+              "value": "={{ $json.emailBody }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1264,
+        -32
+      ],
+      "id": "885923e7-0dcb-4bb6-9a87-7f092d8ece55",
+      "name": "Edit Fields1"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Combine Email Bodies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Email Bodies": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3d340d13a97a4a7432d94cd6540e704e463261a035a285edec622b2deb1829c1"
+  }
+}
